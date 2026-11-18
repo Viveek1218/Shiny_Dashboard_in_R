@@ -23,6 +23,7 @@ ui <- fluidPage(
       tabsetPanel(
         tabPanel(
           "Patient Characteristics",
+<<<<<<< HEAD
           h3("Patient Characteristics"),
           plotOutput("histogram"),
           
@@ -35,9 +36,23 @@ ui <- fluidPage(
           p("Compare patient characteristics across treatment groups."),
           plotOutput("treatmentPlot")
         )
+=======
+      h3("Patient Characteristics"),
+      plotOutput("histogram"),
+      
+      h3("Age Comparison by Treatment Group"),
+      plotOutput("ageBoxplot")
+       ),
+       tabPanel(
+        "Treatment Comparison",
+        h3("Treatment Group Comparison"),
+        p("Compare patient characteristics across treatment groups."),
+        plotOutput("treatmentPlot")
+      )
+>>>>>>> 23d8ecdce37619156403d4ad01adf57eac3a76f4
       )
     )
-  )
+   )
 )
 # Create server
 server <- function(input, output) { 
