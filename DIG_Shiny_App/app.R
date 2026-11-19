@@ -34,11 +34,18 @@ ui <- fluidPage(
         h3("Treatment Group Comparison"),
         p("Compare patient characteristics across treatment groups."),
         plotOutput("treatmentPlot")
+       ),
+        tabPanel(
+          "Clinical Outcomes",
+          h3("Clinical Outcomes Analysis"),
+          p("Explore mortality and hospitalisation outcomes in the DIG Trial."),
+          plotOutput("outcomePlot")
+        )
       )
       )
     )
    )
-)
+
 # Create server
 server <- function(input, output) { 
   
@@ -73,6 +80,25 @@ server <- function(input, output) {
       main = "BMI Comparison by Treatment Group",
       xlab = "Treatment Group",
       ylab = "Body Mass Index (BMI)"
+    )
+    
+  })
+  # Clinical Outcomes - Mortality Comparison
+  output$outcomePlot <- renderPlot({
+    
+    death_data <- table(dig.df$TRTMT, dig.df$DEATH)
+    
+    death_percent <- prop.table(death_data, margin = 1) * 100
+    
+    barplot(
+      t(death_percent),
+      beside = TRUE,
+      col = c("skyblue", "lightgreen"),
+      main = "Mortality Percentage by Treatment Group",
+      xlab = "Treatment Group",
+      ylab = "Percentage of Patients (%)",
+      legend.text = c("Death Status 0", "Death Status 1"),
+      ylim = c(0, 100)
     )
     
   })
