@@ -33,18 +33,34 @@ dig.df <- dig.df %>%
 ui <- dashboardPage(
   skin = "green",
   dashboardHeader(title = "DIG Trial Dashboard"),
-  
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Overview", tabName = "overview"),
-      menuItem("Baselines", tabName = "baselines"),
-      menuItem("Outcomes", tabName = "outcomes"),
-      menuItem("Survival", tabName = "survival"),
-      menuItem("Blood Pressure", tabName = "bp")
+      menuItem("Overview", tabName = "overview", icon = icon("info-circle")),
+      menuItem("Baselines", tabName = "baselines", icon = icon("chart-bar")),
+      menuItem("Outcomes", tabName = "outcomes", icon = icon("heartbeat")),
+      menuItem("Survival", tabName = "survival", icon = icon("clock")),
+      menuItem("Blood Pressure", tabName = "bp", icon = icon("braille"))
+    ),
+    
+    # Global filters
+    checkboxGroupInput(
+      "trtmt_input", "Treatment Group:",
+      choices = c("Placebo", "Treatment"),
+      selected = c("Placebo", "Treatment")
+    ),
+    
+    sliderInput(
+      "age_input", "Age Range:",
+      min = 21, max = 90, value = c(21, 90)
+    ),
+    
+    selectInput(
+      "sex_input", "Sex:",
+      choices = c("All", "Male", "Female"),
+      selected = "All"
     )
   ),
-  
-  dashboardBody(
+   dashboardBody(
     tabItems(
       tabItem(tabName = "overview", h1("Study Overview")),
       tabItem(tabName = "baselines", h1("Baseline Characteristics")),
