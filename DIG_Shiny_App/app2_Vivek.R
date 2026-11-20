@@ -32,50 +32,53 @@ dig.df <- dig.df %>%
   
 ui <- dashboardPage(
   skin = "green",
+  
   dashboardHeader(title = "DIG Trial Dashboard"),
+  
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Overview", tabName = "overview", icon = icon("info-circle")),
-      menuItem("Baselines", tabName = "baselines", icon = icon("chart-bar")),
+      menuItem("Overview", tabName = "overview", icon = icon("info")),
+      menuItem("Baselines", tabName = "baselines", icon = icon("line-chart")),
       menuItem("Outcomes", tabName = "outcomes", icon = icon("heartbeat")),
       menuItem("Survival", tabName = "survival", icon = icon("clock")),
-      menuItem("Blood Pressure", tabName = "bp", icon = icon("braille"))
+      menuItem("Blood Pressure", tabName = "bp", icon = icon("stethoscope"))
     ),
     
-    # Global filters
-    checkboxGroupInput(
-      "trtmt_input", "Treatment Group:",
-      choices = c("Placebo", "Treatment"),
-      selected = c("Placebo", "Treatment")
-    ),
+    # Adding Global filters that will work on entire dashboard
+    checkboxGroupInput("trtmt_input", "Treatment Group:",
+                       choices = c("Placebo", "Treatment"),
+                       selected = c("Placebo", "Treatment")),
     
-    sliderInput(
-      "age_input", "Age Range:",
-      min = 21, max = 90, value = c(21, 90)
-    ),
-    
-    selectInput(
-      "sex_input", "Sex:",
-      choices = c("All", "Male", "Female"),
-      selected = "All"
-    )
-  ),
-   dashboardBody(
+    sliderInput("age_input", "Age Range:", min = 21, max = 90, value = c(21, 90)),
+    selectInput("sex_input", "Sex:", choices = c("All", "Male", "Female"), selected = "All")),
+  
+  dashboardBody(
     tabItems(
-      tabItem(tabName = "overview", h1("Study Overview")),
-      tabItem(tabName = "baselines", h1("Baseline Characteristics")),
-      tabItem(tabName = "outcomes", h1("Clinical Outcomes")),
-      tabItem(tabName = "survival", h1("Survival Analysis")),
-      tabItem(tabName = "bp", h1("Blood Pressure Relationship"))
+      tabItem(tabName = "overview", h2("DIG Trial Overview"), 
+              fluidRow(box(title = "About the Study", status = "success", solidHeader = TRUE,      # "success" keeps the green color of theme set
+                    p("The Digitalis Investigation Group (DIG) trial was a randomized, double-blind clinical trial examining the safety and efficacy of Digoxin in patients with heart failure."),
+                    p("Patients with an ejection fraction of 45% or less were randomized to receive either placebo or digoxin. Key outcomes tracked include mortality, worsening heart failure, and hospitalizations."),
+                    p("Note: To protect patient privacy, variables in this dataset were permuted within treatment groups. Use the filters on the left sidebar to explore different patient subgroups."))
+                    )
+              )
+      )
     )
   )
-)
 
 #-------------------------------------------------------------------------------
 
 # Creating server
 
 server <- function(input, output) {
+  
+  filtered_df <- reactive({
+    
+    dig.df %>%
+      filter(TRTMT %in% input$trtmt_input,
+             AGE >= input$age_input[1],
+             AGE <= input$age_input[2],
+             input$sex_input == "All" | SEX == input$sex_input)
+  })
   
 }
 
