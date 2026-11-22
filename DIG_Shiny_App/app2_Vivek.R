@@ -4,13 +4,15 @@
 library(shiny)
 library(shinydashboard)
 library(tidyverse)
+library(plotly)
 
 
 # Loading and cleaning data
 dig.df <- read_csv("data/DIG.csv")
 
 dig.df <- dig.df %>%
-  select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, SYSBP, HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY) %>%
+  select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, 
+         SYSBP, HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY) %>%
   mutate(ID = as.character(ID),
          
          TRTMT = factor(TRTMT, levels = c(0, 1), labels = c("Placebo", "Treatment")),
@@ -53,27 +55,29 @@ ui <- dashboardPage(
     selectInput("sex_input", "Sex:", choices = c("All", "Male", "Female"), selected = "All")),
   
   dashboardBody(
-    tabItems(
-      tabItem(
-      tabName = "overview",
-      h1("Study Overview"),
-      
-      fluidRow(
-        valueBoxOutput("box_total", width = 4),
-        valueBoxOutput("box_death", width = 4),
-        valueBoxOutput("box_hosp", width = 4)
-      ),
-    
-       
-              fluidRow(box(title = "About the Study", status = "success", solidHeader = TRUE,      # "success" keeps the green color of theme set
-                    p("The Digitalis Investigation Group (DIG) trial was a randomized, double-blind clinical trial examining the safety and efficacy of Digoxin in patients with heart failure."),
-                    p("Patients with an ejection fraction of 45% or less were randomized to receive either placebo or digoxin. Key outcomes tracked include mortality, worsening heart failure, and hospitalizations."),
-                    p("Note: To protect patient privacy, variables in this dataset were permuted within treatment groups. Use the filters on the left sidebar to explore different patient subgroups."))
-                    )
-                 )
-           )
-        )
+    tabItems(tabItem(tabName = "overview",h1("Study Overview"), 
+                     
+                     fluidRow(valueBoxOutput("box_total", width = 4), 
+                              valueBoxOutput("box_death", width = 4), 
+                              valueBoxOutput("box_hosp", width = 4)),
+                     
+                     fluidRow(box(title = "About the Study", status = "success", solidHeader = TRUE, width = 12,      # "success" keeps the green color of theme set
+                                  p("The Digitalis Investigation Group (DIG) trial was a randomized, double-blind clinical trial examining the safety and efficacy of Digoxin in patients with heart failure."),
+                                  p("Patients with an ejection fraction of 45% or less were randomized to receive either placebo or digoxin. Key outcomes tracked include mortality, worsening heart failure, and hospitalizations."),
+                                  p("Note: To protect patient privacy, variables in this dataset were permuted within treatment groups. Use the filters on the left sidebar to explore different patient subgroups."))
+                              ),
+                     
+                     fluidRow(box(title = "Patients by Treatment Group", width = 6, 
+                                  plotOutput("overview_plot", height = "250px")),
+                              
+                              box(title = "Treatment Group Counts", width = 6, 
+                                  tableOutput("overview_table"))
+                              )
+                     
+                     )
+             )
     )
+  )
 
   
   
@@ -95,28 +99,53 @@ server <- function(input, output) {
   
 
 
+  
 # Value boxes for Overview tab
 
 output$box_total <- renderValueBox({
   total_n <- nrow(filtered_df())
-  valueBox(total_n, "Total Patients Selected",
-           icon = icon("users"), color = "blue")
-})
+  valueBox(total_n, "Total Patients Selected", icon = icon("users"), color = "blue")
+  })
 
 output$box_death <- renderValueBox({
   df <- filtered_df()
   death_rate <- round(mean(df$DEATH == "Death", na.rm = TRUE) * 100, 1)
-  valueBox(paste0(death_rate, "%"), "Mortality Rate",
-           icon = icon("heart-broken"), color = "red")
+  valueBox(paste0(death_rate, "%"), "Mortality Rate", icon = icon("heart-broken"), color = "red")
 })
 
 output$box_hosp <- renderValueBox({
   df <- filtered_df()
   hosp_rate <- round(mean(df$HOSP == "Yes", na.rm = TRUE) * 100, 1)
-  valueBox(paste0(hosp_rate, "%"), "Hospitalization Rate",
-           icon = icon("hospital"), color = "orange")
+  valueBox(paste0(hosp_rate, "%"), "Hospitalization Rate", icon = icon("hospital"), color = "orange")
 })
+
+
+# Bar plot for treatment groups
+output$overview_plot <- renderPlot({
+  ggplot(filtered_df(), aes(x = TRTMT, fill = TRTMT)) +
+    geom_bar() +
+    scale_fill_manual(values = c("Placebo" = "orange", "Treatment" = "skyblue")) +
+    labs(x = "Treatment Group", y = "Number of Patients") +
+    theme_minimal() +
+    theme(legend.position = "none")
+})
+
+
+# Summary table for treatment groups
+output$overview_table <- renderTable({
+  filtered_df() %>%
+    group_by(TRTMT) %>%
+    summarise(Count = n(), Percentage = round((n() / nrow(filtered_df())) * 100, 1)) %>%
+    rename("Treatment Group" = TRTMT)
+})
+
+
 }
+
+
+
+
+
 
 #-------------------------------------------------------------------------------
 
