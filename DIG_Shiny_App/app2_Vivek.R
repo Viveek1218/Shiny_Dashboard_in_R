@@ -55,95 +55,66 @@ ui <- dashboardPage(
     selectInput("sex_input", "Sex:", choices = c("All", "Male", "Female"), selected = "All")),
   
   dashboardBody(
-    
     tabItems(
-      
       # Overview Tab
-      tabItem(
-        tabName = "overview",
-        h1("Study Overview"),
-        
-        fluidRow(
-          valueBoxOutput("box_total", width = 4),
-          valueBoxOutput("box_death", width = 4),
-          valueBoxOutput("box_hosp", width = 4)
-        ),
-        
-        fluidRow(
-          box(
-            title = "About the Study",
-            status = "success",
-            solidHeader = TRUE,
-            width = 12,
-            p("The Digitalis Investigation Group (DIG) trial was a randomized, double-blind clinical trial examining the safety and efficacy of Digoxin in patients with heart failure."),
-            p("Patients with an ejection fraction of 45% or less were randomized to receive either placebo or digoxin. Key outcomes tracked include mortality, worsening heart failure, and hospitalizations."),
-            p("Note: To protect patient privacy, variables in this dataset were permuted within treatment groups. Use the filters on the left sidebar to explore different patient subgroups.")
-          )
-        ),
-        
-        fluidRow(
-          box(
-            title = "Patients by Treatment Group",
-            width = 6,
-            plotOutput("overview_plot", height = "250px")
-          ),
-          
-          box(
-            title = "Treatment Group Counts",
-            width = 6,
-            tableOutput("overview_table")
-          )
-        )
-        
-      ), # End Overview Tab
+      tabItem(tabName = "overview", h1("Study Overview"),
+              
+              fluidRow(valueBoxOutput("box_total", width = 4),
+                       valueBoxOutput("box_death", width = 4),
+                       valueBoxOutput("box_hosp", width = 4)
+                       ),
+              
+              fluidRow(box(title = "About the Study",
+                           status = "success",
+                           solidHeader = TRUE,
+                           width = 12,
+                           p("The Digitalis Investigation Group (DIG) trial was a randomized, double-blind clinical trial examining the safety and efficacy of Digoxin in patients with heart failure."),
+                           p("Patients with an ejection fraction of 45% or less were randomized to receive either placebo or digoxin. Key outcomes tracked include mortality, worsening heart failure, and hospitalizations."),
+                           p("Note: To protect patient privacy, variables in this dataset were permuted within treatment groups. Use the filters on the left sidebar to explore different patient subgroups.")
+                           )
+                       ),
+              
+              fluidRow(box(title = "Patients by Treatment Group",
+                           width = 6,
+                           plotOutput("overview_plot", height = "250px")
+                           ),
+                       
+                       box(title = "Treatment Group Counts",
+                           width = 6,
+                           tableOutput("overview_table")
+                           )
+                       )
+              ), # End Overview Tab
       
       
       # Baseline Characteristics Tab
-      tabItem(
-        tabName = "baselines",
-        h2("Baseline Characteristics"),
-        
-        fluidRow(
-          box(
-            title = "Select Variable",
-            width = 4,
-            
-            selectInput(
-              "base_var",
-              "Variable:",
-              choices = c("AGE", "BMI", "SYSBP",
-                          "DIABP", "CREAT", "KLEVEL"),
-              selected = "AGE"
-            ),
-            
-            selectInput(
-              "base_group",
-              "Group By:",
-              choices = c("TRTMT", "SEX", "HYPERTEN"),
-              selected = "TRTMT"
-            )
-          ),
-          
-          box(
-            title = "Boxplot Comparison",
-            width = 8,
-            plotOutput("base_plot", height = "300px")
-          )
-        ),
-        
-        fluidRow(
-          box(
-            title = "Summary Statistics",
-            width = 12,
-            tableOutput("base_table")
-          )
-        )
-        
-      ) # End Baselines Tab
+      tabItem(tabName = "baselines", h2("Baseline Characteristics"),
+              
+              fluidRow(box(title = "Select Variable", width = 4,
+                           
+                           selectInput("base_var", "Variable:",
+                                       choices = c("AGE", "BMI", "SYSBP", "DIABP", "CREAT", "KLEVEL"),
+                                       selected = "AGE"),
+                           selectInput("base_group", "Group By:",
+                                       choices = c("TRTMT", "SEX", "HYPERTEN"),
+                                       selected = "TRTMT")
+                           ),
+                       
+                       box(title = "Boxplot Comparison", width = 8,
+                           plotOutput("base_plot", height = "300px")
+                           )
+                       ),
+              
+              fluidRow(box(title = "Summary Statistics", width = 12,
+                           tableOutput("base_table")
+                           )
+                       )
+              
+              ) # End Baselines Tab
       
-    ) # End tabItems
+      ) # End tabItems 
     
-  ) # End dashboardBody
+    ) # End dashboardBody
   
 ) # End dashboardPage
 
@@ -189,7 +160,7 @@ output$box_hosp <- renderValueBox({
 })
 
 
-# Bar plot for treatment groups
+# Bar plot for treatment groups (Tab 1)
 output$overview_plot <- renderPlot({
   ggplot(filtered_df(), aes(x = TRTMT, fill = TRTMT)) +
     geom_bar() +
@@ -200,12 +171,34 @@ output$overview_plot <- renderPlot({
 })
 
 
-# Summary table for treatment groups
+# Summary table for treatment groups (Tab 1)
 output$overview_table <- renderTable({
   filtered_df() %>%
     group_by(TRTMT) %>%
     summarise(Count = n(), Percentage = round((n() / nrow(filtered_df())) * 100, 1)) %>%
     rename("Treatment Group" = TRTMT)
+})
+
+
+# Tab 2: Boxplot
+output$base_plot <- renderPlot({
+  ggplot(filtered_df(), aes_string(x = input$base_group, y = input$base_var, fill = input$base_group)) +
+    geom_boxplot() +
+    labs(x = input$base_group, y = input$base_var) +
+    theme_minimal() +
+    theme(legend.position = "none")
+})
+
+# Tab 2: Summary table
+output$base_table <- renderTable({
+  filtered_df() %>%
+    group_by_at(input$base_group) %>%
+    summarise(
+      Count = n(),
+      Mean = round(mean(get(input$base_var), na.rm = TRUE), 2),
+      SD = round(sd(get(input$base_var), na.rm = TRUE), 2),
+      Median = round(median(get(input$base_var), na.rm = TRUE), 2)
+    )
 })
 
 
