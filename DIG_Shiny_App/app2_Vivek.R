@@ -110,13 +110,65 @@ ui <- dashboardPage(
                            )
                        )
               
-              ) # End Baselines Tab
-      
-      ) # End tabItems 
+          ), # End Baselines Tab
     
-    ) # End dashboardBody
+    # Tab 3: Clinical Outcomes
+    tabItem(
+      tabName = "outcomes",
+      h2("Clinical Outcomes by Treatment"),
+      
+      fluidRow(
+        box(
+          title = "Outcome Options",
+          width = 4,
+          
+          selectInput(
+            "outcome_var",
+            "Select Outcome:",
+            choices = c(
+              "Mortality (DEATH)" = "DEATH",
+              "Hospitalization (HOSP)" = "HOSP",
+              "Cardiovascular Disease (CVD)" = "CVD",
+              "Worsening Heart Failure (WHF)" = "WHF"
+            ),
+            selected = "DEATH"
+          ),
+          
+          selectInput(
+            "facet_var",
+            "Split By Subgroup:",
+            choices = c("None", "CVD", "HYPERTEN", "SEX"),
+            selected = "None"
+          )
+        ),
+        
+        box(
+          title = "Outcome Proportions",
+          width = 8,
+          plotOutput("outcome_plot", height = "320px")
+        )
+      ),
+      
+      fluidRow(
+        box(
+          title = "Outcome Counts",
+          width = 12,
+          tableOutput("outcome_table")
+        )
+      )
+      
+    ) # End Clinical Outcomes Tab
+    
+    ) # End tabItems
+    
+  ) # End dashboardBody
   
 ) # End dashboardPage
+
+    
+ 
+  
+
 
 
   
