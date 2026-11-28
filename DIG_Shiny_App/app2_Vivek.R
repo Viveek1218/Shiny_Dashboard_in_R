@@ -272,12 +272,12 @@ output$outcome_plot <- renderPlot({
   p
 })
 
-
 # Tab 3: Outcome counts table
 output$outcome_table <- renderTable({filtered_df() %>% 
     count(TRTMT, .data[[input$outcome_var]]) %>%
     rename(Patients = n)
 })
+
 
 # Tab 4: Kaplan-Meier Survival / Mortality Risk
 output$surv_plot <- renderPlot({
@@ -293,30 +293,25 @@ output$surv_plot <- renderPlot({
   )
   
   ggplot(risk_df, aes(x = Month, y = Mortality_Risk, color = Group)) +
-    geom_step(linewidth = 1) +
+    geom_line(linewidth = 1) +
     scale_y_continuous(labels = scales::percent) +
-    labs(
-      x = "Follow-up Time (Months)",
-      y = "Cumulative Mortality Risk",
-      color = "Group"
-    ) +
-    theme_minimal()
+    labs(x = "Follow-up Time (Months)",
+         y = "Cumulative Mortality Risk",
+         color = "Group")
 })
 
 # Tab 4: Yearly Milestone Table
-output$surv_table <- renderTable({
-  df <- filtered_df()
+output$surv_table <- renderTable({df <- filtered_df()
   form <- as.formula(paste("Surv(Month, DEATH == 'Death') ~", input$surv_group))
   fit <- survfit(form, data = df)
   s <- summary(fit)
   
-  data.frame(
-    Month = s$time,
-    Survival_Prob = round(s$surv, 4),
-    Mortality_Risk = round(1 - s$surv, 4),
-    Group = s$strata
-  ) %>%
+  data.frame(Month = s$time,
+             Survival_Prob = round(s$surv, 2),
+             Mortality_Risk = round(1 - s$surv, 2),
+             Group = s$strata) %>%
     filter(Month %in% c(12, 24, 36, 48, 60))
+  
 })
 
 
