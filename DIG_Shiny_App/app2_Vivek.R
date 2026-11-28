@@ -52,10 +52,14 @@ ui <- dashboardPage(
                        selected = c("Placebo", "Treatment")),
     
     sliderInput("age_input", "Age Range:", min = 21, max = 90, value = c(21, 90)),
-    selectInput("sex_input", "Sex:", choices = c("All", "Male", "Female"), selected = "All")),
+    selectInput("sex_input", "Sex:", choices = c("All", "Male", "Female"))
+    
+    ),
+  
   
   dashboardBody(
     tabItems(
+      
       # Overview Tab
       tabItem(tabName = "overview", h1("Study Overview"),
               
@@ -91,13 +95,13 @@ ui <- dashboardPage(
       tabItem(tabName = "baselines", h2("Baseline Characteristics"),
               
               fluidRow(box(title = "Select Variable", width = 4,
-                           
                            selectInput("base_var", "Variable:",
                                        choices = c("AGE", "BMI", "SYSBP", "DIABP", "CREAT", "KLEVEL"),
-                                       selected = "AGE"),
+                                       ),
+                           
                            selectInput("base_group", "Group By:",
                                        choices = c("TRTMT", "SEX", "HYPERTEN"),
-                                       selected = "TRTMT")
+                                       )
                            ),
                        
                        box(title = "Boxplot Comparison", width = 8,
@@ -112,58 +116,40 @@ ui <- dashboardPage(
               
           ), # End Baselines Tab
     
-    # Tab 3: Clinical Outcomes
-    tabItem(
-      tabName = "outcomes",
-      h2("Clinical Outcomes by Treatment"),
       
-      fluidRow(
-        box(
-          title = "Outcome Options",
-          width = 4,
-          
-          selectInput(
-            "outcome_var",
-            "Select Outcome:",
-            choices = c(
-              "Mortality (DEATH)" = "DEATH",
-              "Hospitalization (HOSP)" = "HOSP",
-              "Cardiovascular Disease (CVD)" = "CVD",
-              "Worsening Heart Failure (WHF)" = "WHF"
-            ),
-            selected = "DEATH"
-          ),
-          
-          selectInput(
-            "facet_var",
-            "Split By Subgroup:",
-            choices = c("None", "CVD", "HYPERTEN", "SEX"),
-            selected = "None"
-          )
-        ),
-        
-        box(
-          title = "Outcome Proportions",
-          width = 8,
-          plotOutput("outcome_plot", height = "320px")
-        )
-      ),
-      
-      fluidRow(
-        box(
-          title = "Outcome Counts",
-          width = 12,
-          tableOutput("outcome_table")
-        )
-      )
-      
-    ) # End Clinical Outcomes Tab
+    # Clinical Outcomes tab
+    tabItem(tabName = "outcomes", h2("Clinical Outcomes by Treatment"),
+            
+            fluidRow(box(title = "Outcome Options", width = 4, 
+                         selectInput("outcome_var", "Select Outcome:",
+                                     choices = c(
+                                       "Mortality (DEATH)" = "DEATH",
+                                       "Hospitalization (HOSP)" = "HOSP",
+                                       "Cardiovascular Disease (CVD)" = "CVD",
+                                       "Worsening Heart Failure (WHF)" = "WHF"),
+                                     ),
+                         
+                         selectInput("facet_var", "Split By Subgroup:",
+                                     choices = c("None", "CVD", "HYPERTEN", "SEX"),
+                                     )
+                         ),
+                     
+                     box(title = "Outcome Proportions", width = 8,
+                         plotOutput("outcome_plot", height = "320px")
+                         )
+                     ),
+            
+            fluidRow(box(title = "Outcome Counts", width = 12,
+                         tableOutput("outcome_table"))
+                     )
+            
+            ) # End Clinical Outcomes Tab
     
-    ) # End tabItems
+    ) # End tab_Items
     
-  ) # End dashboardBody
+  ) # End dashboard_Body
   
-) # End dashboardPage
+) # End dashboard_Page
 
     
  
@@ -237,20 +223,38 @@ output$base_plot <- renderPlot({
   ggplot(filtered_df(), aes_string(x = input$base_group, y = input$base_var, fill = input$base_group)) +
     geom_boxplot() +
     labs(x = input$base_group, y = input$base_var) +
-    theme_minimal() +
-    theme(legend.position = "none")
-})
+    theme(legend.position = "none")})
+
 
 # Tab 2: Summary table
-output$base_table <- renderTable({
-  filtered_df() %>%
+output$base_table <- renderTable({filtered_df() %>%
     group_by_at(input$base_group) %>%
-    summarise(
-      Count = n(),
-      Mean = round(mean(get(input$base_var), na.rm = TRUE), 2),
-      SD = round(sd(get(input$base_var), na.rm = TRUE), 2),
-      Median = round(median(get(input$base_var), na.rm = TRUE), 2)
-    )
+    summarise(Count = n(),
+              Mean = round(mean(get(input$base_var), na.rm = TRUE), 2),
+              SD = round(sd(get(input$base_var), na.rm = TRUE), 2),
+              Median = round(median(get(input$base_var), na.rm = TRUE), 2))
+  })
+
+
+# Tab 3: Outcome stacked bar plot
+output$outcome_plot <- renderPlot({
+  p <- ggplot(filtered_df(), aes_string(x = "TRTMT", fill = input$outcome_var)) +
+    geom_bar(position = "fill", color = "black") +
+    scale_y_continuous(labels = scales::percent) +
+    labs(x = "Treatment Group", y = "Percentage of Patients", fill = input$outcome_var)
+  
+  if (input$facet_var != "None") {
+    p <- p + facet_wrap(input$facet_var)
+  }
+  
+  p
+})
+
+
+# Tab 3: Outcome counts table
+output$outcome_table <- renderTable({filtered_df() %>% 
+    count(TRTMT, .data[[input$outcome_var]]) %>%
+    rename(Patients = n)
 })
 
 
