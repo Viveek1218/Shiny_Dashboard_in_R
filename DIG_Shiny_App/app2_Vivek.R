@@ -143,7 +143,29 @@ ui <- dashboardPage(
                          tableOutput("outcome_table"))
                      )
             
-            ) # End Clinical Outcomes Tab
+            ), # End Clinical Outcomes Tab
+    
+    
+    # Survival Tab
+    tabItem(tabName = "survival", h2("Cumulative Mortality Risk Over Time"),
+            
+            fluidRow(box(title = "Survival Settings", width = 4,
+                         selectInput("surv_group", "Compare Curves By:",
+                                     choices = c("Treatment Group" = "TRTMT",
+                                                 "Cardiovascular Disease" = "CVD",
+                                                 "Worsening Heart Failure" = "WHF")
+                                     )
+                         ),
+                     
+                     box(title = "Mortality Risk Curve", width = 8,
+                         plotOutput("surv_plot", height = "320px")
+                         )
+                     ),
+            
+            fluidRow(box(title = "Yearly Mortality Risk Milestones", width = 12,
+                         tableOutput("surv_table"))
+                     )
+            ) # End survival tab
     
     ) # End tab_Items
     
