@@ -5,7 +5,7 @@ library(shiny)
 library(shinydashboard)
 library(tidyverse)
 library(plotly)
-
+library(survival)
 
 # Loading and cleaning data
 dig.df <- read_csv("data/DIG.csv")
@@ -277,6 +277,46 @@ output$outcome_plot <- renderPlot({
 output$outcome_table <- renderTable({filtered_df() %>% 
     count(TRTMT, .data[[input$outcome_var]]) %>%
     rename(Patients = n)
+})
+
+# Tab 4: Kaplan-Meier Survival / Mortality Risk
+output$surv_plot <- renderPlot({
+  df <- filtered_df()
+  form <- as.formula(paste("Surv(Month, DEATH == 'Death') ~", input$surv_group))
+  fit <- survfit(form, data = df)
+  s <- summary(fit)
+  
+  risk_df <- data.frame(
+    Month = s$time,
+    Mortality_Risk = 1 - s$surv,
+    Group = s$strata
+  )
+  
+  ggplot(risk_df, aes(x = Month, y = Mortality_Risk, color = Group)) +
+    geom_step(linewidth = 1) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(
+      x = "Follow-up Time (Months)",
+      y = "Cumulative Mortality Risk",
+      color = "Group"
+    ) +
+    theme_minimal()
+})
+
+# Tab 4: Yearly Milestone Table
+output$surv_table <- renderTable({
+  df <- filtered_df()
+  form <- as.formula(paste("Surv(Month, DEATH == 'Death') ~", input$surv_group))
+  fit <- survfit(form, data = df)
+  s <- summary(fit)
+  
+  data.frame(
+    Month = s$time,
+    Survival_Prob = round(s$surv, 4),
+    Mortality_Risk = round(1 - s$surv, 4),
+    Group = s$strata
+  ) %>%
+    filter(Month %in% c(12, 24, 36, 48, 60))
 })
 
 
